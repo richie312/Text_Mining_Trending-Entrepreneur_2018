@@ -1,0 +1,51 @@
+# Load the Dataset
+setwd("C:/Users/aritra.a.chatterjee/Desktop/Analytics_Raw Data/Semantics Analytics")
+myData=read.csv("MyData.csv",stringsAsFactors = FALSE)
+str(myData)
+# Testing Purpose Dataset
+myDataTrain=data.frame(myData$Office.Operations...In.your.opinion..what.do.we.need.to.change.to.enhance.these.areas.,myData$polarity)
+# Create a new .csv file
+write.csv(myDataTrain,file="myDataTrain.csv")
+DataTrain=read.csv("myDataTrain.csv",stringsAsFactors=FALSE)
+str(DataTrain)
+names(DataTrain)
+colnames(DataTrain)=c("ID","office.Opinion","office.polarity")
+names(DataTrain)
+# Change the polarity levels into numeric code
+library(dplyr)
+DataTrain_1=DataTrain%>%mutate(office.polarity=replace(office.polarity,office.polarity=="positive","1"))
+DataTrain_2=DataTrain_1%>%mutate(office.polarity=replace(office.polarity,office.polarity=="negative","-1"))
+DataTrain_3=DataTrain_2%>%mutate(office.polarity=replace(office.polarity,office.polarity=="neutral","0"))
+# Get the opinion with negative comments
+DataTrain_3$office.polarity=as.factor(DataTrain_3$office.polarity)
+DataTrain_3$Negatives=as.factor(DataTrain_3$office.polarity==-1)
+# Load the Text Mining Package
+library(tm)
+library(SnowballC)
+# Create the Corpus
+corpus=Corpus(VectorSource(DataTrain_3$office.Opinion))
+#convert the corpus to lower case
+corpus1=tm_map(corpus1,tolower)
+corpus1[[10]]$content
+#Convert the corpus into plain text document
+corpus1=tm_map(corpus1,PlainTextDocument)
+# Remove Punctuation
+corpus1=tm_map(corpus1,removePunctuation)
+corpus1[[1]]
+# Remove stopwords
+x<-stopwords("english")
+corpus1=tm_map(corpus1,removeWords,x)
+# Stem Documents
+corpus1=tm_map(corpus1,stemDocument)
+corpus1[[140]]
+# Create matrix
+frequencies = DocumentTermMatrix(corpus1)
+frequencies
+corpus1[[123]]$content
+# Converting the corpus into dataframe
+corpus1_df<-data.frame(text=unlist(sapply(corpus1, `[`, "content")), 
+                      stringsAsFactors=F)
+#Aligning with the other variable
+corpus1_df1<-data.frame(corpus1_df,DataTrain_3$office.polarity,DataTrain_3$Negatives)
+# Create .csv file
+write.csv(corpus1_df1,file="corpus1_df.csv")
